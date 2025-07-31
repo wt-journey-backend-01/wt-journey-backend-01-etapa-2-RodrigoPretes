@@ -1,9 +1,28 @@
 const { v4: uuidv4 } = require('uuid');
 const { createError } = require('../utils/errorHandler');
+const { isValidDate } = require('../utils/formatDate');
+
+const caseModel = (req) => {
+
+    if (!(req.nome || req.dataDeIncorporacao || req.cargo)) {
+        return {
+            err: null,
+            msgError: "Campos obrigatórios faltando",
+            status: 400
+        };
+    }
+
+  return {
+    id: uuidv4(),
+    nome: req.nome,
+    dataDeIncorporacao: isValidDate(req.dataDeIncorporacao),
+    cargo: req.cargo
+  };
+};
 
 const agentes = [
     {
-        id: "401bccf5-cf9e-489d-8412-446cd169a0f1",
+        id: uuidv4(),
         nome: "Rommel Carneiro",
         dataDeIncorporacao: "1992-10-04",
         cargo: "delegado"
@@ -26,10 +45,15 @@ function getAgentByID(id) {
 }
 
 function insertAgent(req) {
+
+    if(req.dataDeIncorporacao && !isValidDate(req.dataDeIncorporacao)) {
+        return createError(400, "Data de incorporação inválida");
+    };
+
     const novoAgente = {
         id: uuidv4(),
         nome: req.nome,
-        dataDeIncorporacao: req.dataDeIncorporacao,
+        dataDeIncorporacao: isValidDate(req.dataDeIncorporacao),
         cargo: req.cargo
     };
 
@@ -51,10 +75,11 @@ function updateAgentById(agentID, req) {
         return createError(404, "ID de agente não encontrado");
     }
 
+    delete req.id;
+
     agentes[index] = {
-        id: agentID,
         nome: req.nome,
-        dataDeIncorporacao: req.dataDeIncorporacao,
+        dataDeIncorporacao: isValidDate(req.dataDeIncorporacao),
         cargo: req.cargo
     };
 
@@ -69,6 +94,8 @@ function patchAgentByID(agentID, req) {
     if (index === -1) {
         return createError(404, "ID de agente não encontrado");
     }
+
+    delete req.id;
 
     agentes[index] = { ...agentes[index], ...req };
 

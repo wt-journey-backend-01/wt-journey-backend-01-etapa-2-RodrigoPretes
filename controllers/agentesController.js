@@ -1,8 +1,18 @@
 const agentesRepository = require("../repositories/agentesRepository");
+const { v4: uuidv4 } = require('uuid');
+
+const caseModel = (req) => {
+  return {
+    id: uuidv4(),
+    nome: req.nome,
+    dataDeIncorporacao: req.date,
+    cargo: req.cargo
+  };
+};
 
 function getAllAgentes(req, res) {
     const result = agentesRepository.findAllAgents();
-    res.json(result);
+    res.status(result.status).json(result);
 }
 
 function getAgenteByID(req, res) {
@@ -11,7 +21,8 @@ function getAgenteByID(req, res) {
 }
 
 function insertAgente(req, res) {
-    const result = agentesRepository.insertAgent(req.body);
+    const novoAgente = caseModel(req.body);
+    const result = agentesRepository.insertAgent(novoAgente);
     res.status(result.status).json(result);
 }
 

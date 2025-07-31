@@ -22,49 +22,37 @@ const caseModel = (req) => {
 
 function getAllCasos(req, res) {
 	const casos = casosRepository.findAllCases();
-	res.json(casos);
+	res.status(result.status).json(casos);
 }
 
 function getCaseByID(req, res) {
 	const caseID = req.params.id;
 	const caso = casosRepository.getCaseByID(caseID);
-	if (caso.err) {
-		return res.json(caso);
-	}
-	res.json(caso);
+	res.status(result.status).json(caso);
 }
 
 function insertCase(req, res) {
 	const novoCaso = caseModel(req.body);
 	const insertedCase = casosRepository.insertCase(novoCaso);
-	return res.json(insertedCase);
+	return res.status(result.status).json(insertedCase);
 }
 
 function updateCaseById(req, res){
 	const caseID = req.params.id;
 	const updatedCase = casosRepository.updateCaseById(caseID, req.body);
-	if (updatedCase.err) {
-		return res.json(updatedCase);
-	}
-	return res.json(updatedCase);
+	return res.status(result.status).json(updatedCase);
 }
 
 function patchCaseByID(req, res) {
 	const caseID = req.params.id;
 	const patchedCase = casosRepository.patchCaseByID(caseID, req.body);
-	if (patchedCase.err) {
-		return res.json(patchedCase);
-	}
-	return res.json(patchedCase);
+	return res.status(result.status).json(patchedCase);
 }
 
 function deleteCaseById(req, res) {
 	const caseID = req.params.id;
 	const deletedCase = casosRepository.deleteCaseById(caseID);
-	if (deletedCase.err) {
-		return res.json(deletedCase);
-	}
-	return res.json(deletedCase);
+	return res.status(result.status).json(deletedCase);
 }
 
 
