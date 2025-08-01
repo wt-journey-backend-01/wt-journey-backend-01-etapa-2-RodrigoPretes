@@ -1,85 +1,161 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 7 créditos restantes para usar o sistema de feedback AI.
+Você tem 9 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para RodrigoPretes:
 
-Nota final: **16.1/100**
+Nota final: **25.3/100**
 
-# Olá RodrigoPretes! 👋✨
+# Feedback para RodrigoPretes 🚓✨
 
-Primeiramente, parabéns por se dedicar a esse desafio tão legal de construir uma API REST para o Departamento de Polícia! 🎉 Eu dei uma boa olhada no seu código e quero te ajudar a destravar de vez essa etapa, trazendo insights que vão te deixar muito mais seguro e confiante para avançar. Vamos juntos nessa? 🚀
-
----
-
-## 🎯 O que você já mandou bem
-
-- Sua organização de pastas está correta! Você tem as pastas `routes/`, `controllers/`, `repositories/`, `utils/` e `docs/`, seguindo a arquitetura modular esperada. Isso é fundamental para projetos escaláveis e manutenção futura. 👏
-- Você criou os arquivos de rotas para agentes e casos (`agentesRoutes.js` e `casosRoutes.js`) com os endpoints básicos listados.
-- Usou o middleware `express.json()` no `server.js` para tratar JSON no corpo das requisições, o que é essencial para APIs REST.
-- Implementou o uso do UUID para gerar IDs únicos em vários lugares, o que é ótimo para identificar recursos.
-- Já tem validações básicas para os campos obrigatórios e tratamento de erros com status HTTP corretos em alguns pontos.
-- Conseguiu passar algumas validações importantes, como retornar erro 400 para payloads mal formatados e erro 404 para recursos inexistentes.
-- Também se aventurou nos bônus, tentando implementar filtros e mensagens de erro customizadas — isso mostra iniciativa e vontade de ir além! 🌟
+Olá Rodrigo! Primeiro, parabéns por todo o esforço que você colocou nesse desafio de API para o Departamento de Polícia. Construir uma API RESTful com Node.js e Express.js, organizando rotas, controladores, repositórios e tratando erros não é tarefa simples, e você já caminhou bastante! 🎉
 
 ---
 
-## 🔎 Onde seu código precisa de atenção e como melhorar
+## 🎯 O que você mandou bem
 
-### 1. **Status e objetos retornados dos controladores**
+- Você estruturou seu projeto com as pastas `routes`, `controllers` e `repositories`, que é exatamente o que se espera para manter o código organizado e escalável. Isso é fundamental para projetos reais e você já está no caminho certo! 👏
 
-No seu `casosController.js`, notei que você está usando a variável `result` para enviar as respostas, mas ela **não está declarada** dentro das funções. Por exemplo:
+- Implementou a maioria dos endpoints para `/agentes` e `/casos`, incluindo métodos GET, POST, PUT, PATCH e DELETE. Isso mostra que você entendeu o básico do CRUD e como o Express lida com rotas.
 
-```js
-function getAllCasos(req, res) {
-	const casos = casosRepository.findAllCases();
-	res.status(result.status).json(casos);
-}
-```
+- Fez uso do pacote `uuid` para gerar IDs únicos, o que é uma boa prática para identificação dos recursos.
 
-Aqui, você chama `casosRepository.findAllCases()` e guarda em `casos`, mas depois tenta usar `result.status`, que não existe. Isso vai gerar um erro de referência.
+- Implementou validações básicas para os dados recebidos, como verificar campos obrigatórios e o formato UUID, além de retornar status HTTP adequados em vários pontos.
 
-**Como corrigir?** Use a variável que recebeu o resultado do repositório, assim:
+- Você também tentou implementar filtros e ordenações por query params, o que é um diferencial bacana! Mesmo que ainda precise ajustar, é ótimo ver essa iniciativa.
 
-```js
-function getAllCasos(req, res) {
-	const result = casosRepository.findAllCases();
-	res.status(result.status).json(result);
-}
-```
-
-O mesmo acontece em outras funções do `casosController.js`, como `getCaseByID`, `insertCase`, `updateCaseById`, `patchCaseByID` e `deleteCaseById`. Você precisa declarar a variável `result` para armazenar o retorno do repositório e usá-la para enviar a resposta.
+- Seu código tem comentários Swagger para documentação, o que ajuda muito na manutenção e testes da API.
 
 ---
 
-### 2. **Validação dos dados no model e repositórios**
+## 🔍 Pontos que precisam de atenção — vamos destrinchar juntos
 
-No seu `casosController.js`, o `caseModel` faz uma validação do campo `status`:
+### 1. **Validação e uso correto do UUID nos IDs**
+
+Você recebeu uma penalidade por usar IDs que não são UUID válidos para agentes e casos, e isso impacta diretamente a confiabilidade das operações de busca, atualização e deleção.
+
+Ao analisar seu código, percebi que:
+
+- No seu repositório de agentes (`repositories/agentesRepository.js`), o agente inicial tem um `id` gerado com `uuidv4()`, tudo certo. Mas na função `updateAgentById`, você atribui a propriedade `dataDeIncorporacao` assim:
 
 ```js
-const caseModel = (req) => {
-    if (req.status !== "aberto" && req.status !== "solucionado") {
-        return {
-            err: null,
-            msgError: "status inválido, deve ser 'aberto' ou 'solucionado'",
-            status: 400
-        };
-    }
-    return {
-        id: uuidv4(),
-        titulo: req.titulo,
-        descricao: req.descricao,
-        status: req.status,
-        agente_id: req.agente_id
-    };
+agentes[index] = {
+    id: agentes[index].id,
+    nome: req.nome,
+    dataDeIncorporacao: isValidDate(req.dataDeIncorporacao), // <-- Aqui está o problema
+    cargo: req.cargo
 };
 ```
 
-Mas essa função está retornando um objeto de erro no lugar do modelo quando o status é inválido, e isso não está sendo tratado adequadamente no controlador antes de chamar o repositório.
+O que acontece é que `isValidDate()` retorna um booleano (true/false), e você está atribuindo isso diretamente ao campo `dataDeIncorporacao`. Isso faz com que a data fique como `true` ou `false`, não a data em si.
 
-**Por quê isso é um problema?** Porque se o `caseModel` retorna um objeto de erro, o repositório vai tentar inserir esse objeto como se fosse um caso válido, o que pode gerar inconsistência e erros difíceis de debugar.
+**Como corrigir?**
 
-**Como melhorar?** Separe a validação da construção do modelo. Por exemplo:
+Você deve validar a data antes, e atribuir o valor original somente se for válido, assim:
+
+```js
+if (!isValidDate(req.dataDeIncorporacao)) {
+  return createError(400, "Data de incorporação inválida");
+}
+
+agentes[index] = {
+  id: agentes[index].id,
+  nome: req.nome,
+  dataDeIncorporacao: req.dataDeIncorporacao,
+  cargo: req.cargo
+};
+```
+
+Esse ajuste garante que a data esteja no formato correto e evita quebrar a integridade dos dados.
+
+---
+
+### 2. **Inconsistências no retorno dos dados e nomes das propriedades**
+
+No seu repositório de agentes, a função `findByCargo` retorna um objeto com a propriedade `data`:
+
+```js
+return {
+    status: 200,
+    data: result
+};
+```
+
+Porém, no controller, você faz:
+
+```js
+return res.status(result.status).json(result);
+```
+
+Isso significa que a resposta terá `{ status, data }`, mas a especificação Swagger e o esperado é que o array venha dentro de uma propriedade chamada `agentes` ou algo semelhante, para manter consistência com o retorno de `findAllAgents` que retorna `{ agentes, msg, status }`.
+
+**Sugestão:**
+
+Padronize o nome da propriedade para `agentes` no retorno do filtro, assim:
+
+```js
+return {
+    status: 200,
+    agentes: result,
+    msg: `Agentes com cargo ${cargo} encontrados com sucesso`
+};
+```
+
+Isso ajuda quem consome a API a esperar sempre o mesmo formato.
+
+---
+
+### 3. **Problemas na função `getAllAgentes` do controller**
+
+No controller `agentesController.js`, dentro da função `getAllAgentes`, você tem este trecho:
+
+```js
+if (agente_id) {
+    if (!isUUID(agente_id)) {
+        return res.status(400).json({ msg: "ID de agente não fornecido ou inválido" });
+    }
+    const result = casosRepository.findByAgent(agente_id);
+    return res.status(result.status).json(result);
+}
+```
+
+Mas `agente_id` não está definido nessa função, pois você só extraiu `cargo` e `sort` de `req.query`. Isso vai gerar um erro de referência.
+
+**Como corrigir?**
+
+Extraia `agente_id` de `req.query` antes de usar:
+
+```js
+const { cargo, sort, agente_id } = req.query;
+```
+
+---
+
+### 4. **Validação incorreta no controller de casos**
+
+No `controllers/casosController.js`, a função `validateCaseData` tem um erro grave:
+
+```js
+function validateCaseData(data) {
+  const invalid = validateUUID(req.params.id);
+  if (invalid) return res.status(invalid.status).json(invalid);
+  if (!data.titulo || !data.descricao || !data.status || !data.agente_id) {
+    return { valid: false, message: "Campos obrigatórios faltando" };
+  }
+  if (data.status !== "aberto" && data.status !== "solucionado") {
+    return { valid: false, message: "Status inválido, deve ser 'aberto' ou 'solucionado'" };
+  }
+  return { valid: true };
+}
+```
+
+Aqui, você está usando `req.params.id` dentro da função, mas `req` não está definido como parâmetro da função — você só recebe `data`. Além disso, você está tentando fazer uma resposta HTTP dentro de uma função que deveria apenas validar os dados.
+
+**Como corrigir?**
+
+Separe a validação do UUID do id do recurso do payload de dados. A função `validateCaseData` deve apenas receber os dados e retornar se são válidos ou não.
+
+Por exemplo:
 
 ```js
 function validateCaseData(data) {
@@ -91,208 +167,147 @@ function validateCaseData(data) {
   }
   return { valid: true };
 }
-
-const caseModel = (data) => ({
-  id: uuidv4(),
-  titulo: data.titulo,
-  descricao: data.descricao,
-  status: data.status,
-  agente_id: data.agente_id
-});
 ```
 
-E no controlador:
+E a validação do UUID do `id` deve estar no controller, antes de chamar essa função.
+
+---
+
+### 5. **Validação do `agente_id` na criação de casos**
+
+Vi que no requisito bônus e nos testes, a validação de que o `agente_id` passado em um caso deve existir nos agentes não está implementada.
+
+No seu `insertCase` você cria o caso sem verificar se o `agente_id` existe no repositório de agentes:
 
 ```js
-function insertCase(req, res) {
-  const validation = validateCaseData(req.body);
-  if (!validation.valid) {
-    return res.status(400).json({ msg: validation.message });
-  }
-  const novoCaso = caseModel(req.body);
-  const result = casosRepository.insertCase(novoCaso);
-  return res.status(result.status).json(result);
+const novoCaso = caseModel(req.body);
+const insertedCase = casosRepository.insertCase(novoCaso);
+return res.status(insertedCase.status).json(insertedCase);
+```
+
+Isso pode gerar casos atrelados a agentes inexistentes, o que não faz sentido e quebra a integridade da API.
+
+**Como corrigir?**
+
+Antes de inserir o caso, verifique se o agente existe:
+
+```js
+const agenteExistente = agentesRepository.getAgentByID(req.body.agente_id);
+if (agenteExistente.status === 404) {
+  return res.status(404).json({ msg: "Agente não encontrado para o agente_id fornecido" });
 }
 ```
 
-Essa abordagem deixa o código mais claro e previne erros.
+Isso garante que só casos válidos sejam criados.
 
 ---
 
-### 3. **Inconsistência na validação de datas e campos no agentesRepository**
+### 6. **Tratamento de erros e mensagens consistentes**
 
-No `agentesRepository.js`, a função `caseModel` tem um erro lógico:
+Notei que em alguns pontos você retorna erros usando o helper `createError`, que provavelmente cria objetos com `status` e `message`, mas em outros momentos você retorna diretamente objetos com `msg` ou `message` e status.
+
+Por exemplo, em `getAgentByID`:
 
 ```js
-const caseModel = (req) => {
-    if (!(req.nome || req.dataDeIncorporacao || req.cargo)) {
-        return {
-            err: null,
-            msgError: "Campos obrigatórios faltando",
-            status: 400
-        };
-    }
-    return {
-        id: uuidv4(),
-        nome: req.nome,
-        dataDeIncorporacao: isValidDate(req.dataDeIncorporacao),
-        cargo: req.cargo
-    };
-};
+const result = agentesRepository.getAgentByID(req.params.id);
+res.status(result.status).json(result);
 ```
 
-O problema está no uso do operador lógico OR (`||`) dentro da negação `!`. Isso significa que o erro só será retornado se **nenhum dos campos estiver presente**, mas o esperado é que **todos os campos sejam obrigatórios**.
-
-**Correção:** Use o operador AND (`&&`) para garantir que todos os campos estejam presentes:
+E na função `getAgentByID` do repositório:
 
 ```js
-if (!(req.nome && req.dataDeIncorporacao && req.cargo)) {
-    return {
-        err: null,
-        msgError: "Campos obrigatórios faltando",
-        status: 400
-    };
+return agent
+    ? { agent, msg: "Agente encontrado com sucesso", status: 200 }
+    : createError(404, "ID de agente não encontrado");
+```
+
+Aqui, se o agente não for encontrado, você retorna um objeto de erro, mas no controller você sempre responde com o objeto inteiro, que pode ter a propriedade `agent` ou não.
+
+**Sugestão:**
+
+Padronize o formato da resposta para sucesso e erro, e no controller trate para enviar a resposta correta, por exemplo:
+
+```js
+if (result.status >= 400) {
+  return res.status(result.status).json({ error: result.message });
+}
+return res.status(result.status).json(result.agent);
+```
+
+Assim seu cliente sempre sabe o que esperar.
+
+---
+
+### 7. **No repositório de agentes, cuidado com sobrescrever o ID no patch**
+
+Na função `patchAgentByID`:
+
+```js
+if(req.id && req.id !== caseID) {
+    return createError(400, "ID pode ser sobrescrito");
 }
 ```
 
----
+Aqui `caseID` não está definido, e você está verificando `req.id` que é o objeto recebido. Parece que houve confusão de variáveis.
 
-### 4. **Atualização completa no agentesRepository está sobrescrevendo o ID e não mantendo os dados corretamente**
+**Como corrigir?**
 
-Na função `updateAgentById`:
-
-```js
-agentes[index] = {
-    nome: req.nome,
-    dataDeIncorporacao: isValidDate(req.dataDeIncorporacao),
-    cargo: req.cargo
-};
-```
-
-Aqui, você está substituindo o objeto inteiro do agente, mas sem manter o `id` original. Isso pode causar problemas porque o ID é a chave primária que identifica o agente e deve ser mantida.
-
-**Como corrigir:** Inclua o `id` original no objeto atualizado:
+Você deve comparar o `req.id` com o `agentID` passado para a função, assim:
 
 ```js
-agentes[index] = {
-    id: agentes[index].id,
-    nome: req.nome,
-    dataDeIncorporacao: isValidDate(req.dataDeIncorporacao),
-    cargo: req.cargo
-};
-```
-
----
-
-### 5. **IDs utilizados para agentes e casos não são validados como UUID**
-
-Você recebeu uma penalidade porque IDs utilizados não são validados como UUID. Isso pode ocorrer porque no momento da atualização ou criação, não há uma validação explícita para garantir que o ID passado seja um UUID válido.
-
-**Por que isso é importante?** Garantir que o ID seja um UUID válido evita problemas de integridade e inconsistência, além de proteger sua API contra dados mal formatados.
-
-**Como melhorar?** Você pode usar o pacote `uuid` para validar os IDs recebidos antes de prosseguir com operações que usam esse ID:
-
-```js
-const { validate: isUUID } = require('uuid');
-
-function getAgentByID(id) {
-    if (!isUUID(id)) {
-        return createError(400, "ID inválido, deve ser UUID");
-    }
-    // restante do código...
-}
-```
-
-Faça essa validação em todos os pontos onde o ID é recebido via parâmetro.
-
----
-
-### 6. **No update parcial (PATCH) dos casos, o campo `status` deve ser validado**
-
-No `patchCaseByID` do repositório, você simplesmente faz:
-
-```js
-const patchedCase = { ...cases[indexCase], ...req };
-cases[indexCase] = patchedCase;
-```
-
-Mas não há validação para o campo `status` se ele for passado no `req`. Isso pode deixar o status com valores inválidos.
-
-**Sugestão:** Antes de aplicar o patch, valide o campo `status` se ele estiver presente:
-
-```js
-if (req.status && req.status !== "aberto" && req.status !== "solucionado") {
-    return createError(400, "Status inválido, deve ser 'aberto' ou 'solucionado'");
+if(req.id && req.id !== agentID) {
+    return createError(400, "ID não pode ser sobrescrito");
 }
 ```
 
 ---
 
-### 7. **No `updateCaseById`, você está deletando `req.id` antes de usar, mas isso não evita que o ID seja sobrescrito**
+### 8. **Filtros e ordenação incompletos**
 
-No `updateCaseById`:
+Você implementou filtros básicos, mas faltam filtros mais avançados, como busca por palavras-chave no título/descrição dos casos, e ordenação por data de incorporação dos agentes.
 
-```js
-delete req.id;
-cases[indexCase] = updatedCase;
-```
-
-Mas `updatedCase` é criado via `caseModel(req)`, que gera um novo UUID para o campo `id`, ignorando o ID original. Isso faz com que o ID do caso seja alterado ao atualizar, o que não é esperado.
-
-**Como corrigir:** O ID do caso deve ser mantido, então você pode fazer:
-
-```js
-const updatedCase = {
-    id: cases[indexCase].id,
-    titulo: req.titulo,
-    descricao: req.descricao,
-    status: req.status,
-    agente_id: req.agente_id
-};
-cases[indexCase] = updatedCase;
-```
-
-Ou ajustar o `caseModel` para receber o ID como parâmetro opcional.
+Esses requisitos são bônus, e você já tentou implementar parte deles, parabéns pela iniciativa! Para avançar, recomendo estudar como usar funções como `.filter()` e `.sort()` em arrays, e como receber e tratar query params.
 
 ---
 
-## 🔗 Recursos para você aprofundar e corrigir esses pontos
+## 📚 Recursos para você mergulhar e melhorar ainda mais
 
-- Para entender melhor a estrutura de rotas e controllers no Express.js:  
-  https://expressjs.com/pt-br/guide/routing.html  
-- Para aprender sobre validação e tratamento de erros em APIs REST:  
+- Para entender melhor o uso do Express e rotas:  
+  https://expressjs.com/pt-br/guide/routing.html
+
+- Para organizar seu projeto com arquitetura MVC em Node.js:  
+  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
+
+- Para aprender a validar dados e tratar erros em APIs:  
+  https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_  
   https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
-  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404  
-- Para dominar o fluxo de requisição e resposta no Express:  
-  https://youtu.be/Bn8gcSQH-bc?si=Df4htGoVrV0NR7ri  
-- Para manipular arrays e objetos corretamente no JavaScript:  
-  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI  
-- Para validar UUIDs com o pacote `uuid` e garantir integridade:  
-  https://www.npmjs.com/package/uuid#uuidvalidateid  
+  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404
+
+- Para manipular arrays em JavaScript com `filter`, `find`, `sort`:  
+  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI
 
 ---
 
-## 📝 Resumo rápido do que focar para melhorar seu projeto
+## 📋 Resumo dos principais pontos para focar agora
 
-- Corrigir o uso da variável `result` nos controladores para capturar e usar corretamente o retorno dos repositórios.
-- Separar validação de dados e criação do modelo, tratando erros antes de tentar inserir ou atualizar dados.
-- Ajustar a lógica de validação dos campos obrigatórios para usar AND ao invés de OR.
-- Manter o `id` original nas atualizações completas (PUT) para agentes e casos.
-- Validar que os IDs recebidos são UUIDs válidos antes de realizar operações.
-- Validar campos específicos (como `status`) em atualizações parciais (PATCH).
-- Evitar sobrescrever IDs ao criar novos objetos para update, mantendo a integridade dos dados.
+- Corrigir a atribuição errada da data (`dataDeIncorporacao`) para não salvar booleanos no lugar da data.
+- Ajustar a extração dos parâmetros de query no controller (`agente_id` estava faltando).
+- Separar corretamente as validações de UUID do ID dos recursos e dos dados do corpo da requisição.
+- Implementar checagem para garantir que `agente_id` passado em casos exista no repositório de agentes.
+- Padronizar o formato das respostas de sucesso e erro para que o cliente da API saiba o que esperar.
+- Corrigir a validação que impede sobrescrever o ID no patch, usando a variável correta.
+- Continuar trabalhando nos filtros e ordenações bônus para melhorar sua API.
+- Garantir que os IDs usados sejam sempre UUID válidos, para evitar penalidades.
 
 ---
 
-## Finalizando… 🎉
+Rodrigo, você está no caminho certo! 🚀 Esses ajustes vão destravar várias funcionalidades e melhorar muito a qualidade da sua API. Continue praticando, revisando seu código com calma e testando cada parte. Você já tem uma base sólida e com um pouco mais de atenção aos detalhes vai brilhar muito! ✨
 
-Rodrigo, você está no caminho certo! 🚀 A estrutura do seu projeto e a organização dos arquivos já mostram que você entende os conceitos básicos. Agora, com esses ajustes, seu código vai ficar muito mais robusto, confiável e alinhado com as boas práticas de APIs RESTful.
+Se precisar, volte nos vídeos e na documentação que recomendei — eles vão te ajudar a consolidar esses conceitos.
 
-Continue firme, revisando cada ponto com calma e testando suas rotas manualmente (usando Postman, Insomnia ou curl) para ver como as respostas estão chegando. E lembre-se: cada erro é uma oportunidade de aprendizado! 💡
+Conte comigo para o que precisar! 💪👨‍💻
 
-Se precisar, volte aos recursos que indiquei para reforçar os conceitos. Estou aqui torcendo pelo seu sucesso! 👊✨
-
-Um abraço de Code Buddy! 🤖💙
+Um abraço e até a próxima revisão! 👋😊
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
