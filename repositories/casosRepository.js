@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4, validate } = require('uuid');
 const { createError } = require('../utils/errorHandler')
 
 const caseModel = (req) => {
@@ -41,6 +41,24 @@ function findAllCases() {
     }
 }
 
+function findByStatus(status) {
+	const filtered = cases.filter(c => c.status === status);
+	return {
+		cases: filtered,
+		msg: `Casos com status '${status}' encontrados com sucesso`,
+		status: 200
+	};
+}
+
+function findByAgent(agente_id) {
+    const filtered = cases.filter(c => c.agente_id === agente_id);
+    return {
+        cases: filtered,
+        msg: `Casos para o agente com ID '${agente_id}' encontrados com sucesso`,
+        status: 200
+    };
+}
+
 function getCaseByID(id) {
     const caseFounded = cases.find((caseItem) => caseItem.id === id);
 
@@ -70,14 +88,17 @@ function updateCaseById(caseID, req){
         return createError(404, "ID de caso não encontrado");
     }
 
-    const updatedCase = caseModel(req);
-
-    delete req.id;
+    const updatedCase = {
+        id: cases[indexCase].id,
+        titulo: req.titulo,
+        descricao: req.descricao,
+        status: req.status,
+        agente_id: req.agente_id
+    };
 
     cases[indexCase] = updatedCase;
 
     return {
-            msg: "Caso atualizado com sucesso",
             status: 204
         };
 }
@@ -89,13 +110,13 @@ function patchCaseByID(caseID, req){
         return createError(404, "ID de caso não encontrado")
     }
 
-    delete req.id;
+    if(req.id && req.id !== caseID) {
+        return createError(400, "ID pode ser sobrescrito");
+    }
 
-    const patchedCase = { ...cases[indexCase], ...req };
-    cases[indexCase] = patchedCase;
+    cases[indexCase] = { ...cases[indexCase], ...req };
 
     return {
-        msg: "Campos de caso informado, foram atualizados com sucesso.",
         status: 204
     };
 }
@@ -115,5 +136,5 @@ function deleteCaseById(caseID){
 }
 
 module.exports = {
-    findAllCases, getCaseByID, insertCase, updateCaseById, patchCaseByID, deleteCaseById
+    findAllCases, findByStatus, findByAgent, getCaseByID, insertCase, updateCaseById, patchCaseByID, deleteCaseById
 }

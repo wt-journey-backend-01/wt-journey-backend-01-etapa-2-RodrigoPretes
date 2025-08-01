@@ -3,19 +3,10 @@ const { createError } = require('../utils/errorHandler');
 const { isValidDate } = require('../utils/formatDate');
 
 const caseModel = (req) => {
-
-    if (!(req.nome || req.dataDeIncorporacao || req.cargo)) {
-        return {
-            err: null,
-            msgError: "Campos obrigatórios faltando",
-            status: 400
-        };
-    }
-
   return {
     id: uuidv4(),
     nome: req.nome,
-    dataDeIncorporacao: isValidDate(req.dataDeIncorporacao),
+    dataDeIncorporacao: isValidDate(req.dataDeIncorporacao) ? req.dataDeIncorporacao : null,
     cargo: req.cargo
   };
 };
@@ -44,18 +35,33 @@ function getAgentByID(id) {
         : createError(404, "ID de agente não encontrado");
 }
 
+function findByCargo(cargo) {
+    const result = agentes.filter(agent => agent.cargo.toLowerCase() === cargo.toLowerCase());
+    return {
+        status: 200,
+        data: result
+    };
+}
+
+function sortByName(order) {
+    const sorted = [...agentes].sort((a, b) => {
+        if (order === 'asc') return a.nome.localeCompare(b.nome);
+        else return b.nome.localeCompare(a.nome);
+    });
+    return {
+        status: 200,
+        data: sorted
+    };
+}
+
 function insertAgent(req) {
 
     if(req.dataDeIncorporacao && !isValidDate(req.dataDeIncorporacao)) {
         return createError(400, "Data de incorporação inválida");
     };
 
-    const novoAgente = {
-        id: uuidv4(),
-        nome: req.nome,
-        dataDeIncorporacao: isValidDate(req.dataDeIncorporacao),
-        cargo: req.cargo
-    };
+    const novoAgente = caseModel(req);
+
 
     if (!novoAgente.nome || !novoAgente.dataDeIncorporacao || !novoAgente.cargo) {
         return createError(400, "Campos obrigatórios faltando");
@@ -75,16 +81,14 @@ function updateAgentById(agentID, req) {
         return createError(404, "ID de agente não encontrado");
     }
 
-    delete req.id;
-
     agentes[index] = {
+        id: agentes[index].id,
         nome: req.nome,
         dataDeIncorporacao: isValidDate(req.dataDeIncorporacao),
         cargo: req.cargo
     };
 
     return {
-        msg: "Agente atualizado com sucesso",
         status: 204
     };
 }
@@ -95,12 +99,13 @@ function patchAgentByID(agentID, req) {
         return createError(404, "ID de agente não encontrado");
     }
 
-    delete req.id;
+    if(req.id && req.id !== caseID) {
+        return createError(400, "ID pode ser sobrescrito");
+    }
 
     agentes[index] = { ...agentes[index], ...req };
 
     return {
-        msg: "Campos de agente atualizados com sucesso",
         status: 204
     };
 }
@@ -120,6 +125,8 @@ function deleteAgentById(agentID) {
 
 module.exports = {
     findAllAgents,
+    findByCargo,
+    sortByName,
     getAgentByID,
     insertAgent,
     updateAgentById,
