@@ -1,4 +1,5 @@
 const casosRepository = require("../repositories/casosRepository");
+const agentesRepository = require('../repositories/agentesRepository');
 const { v4: uuidv4, validate: isUUID } = require('uuid');
 const { createError } = require('../utils/errorHandler');
 
@@ -22,8 +23,6 @@ const caseModel = (req) => {
 };
 
 function validateCaseData(data) {
-	const invalid = validateUUID(req.params.id);
-	if (invalid) return res.status(invalid.status).json(invalid);
   if (!data.titulo || !data.descricao || !data.status || !data.agente_id) {
     return { valid: false, message: "Campos obrigatórios faltando" };
   }
@@ -74,6 +73,10 @@ function insertCase(req, res) {
 	const validation = validateCaseData(req.body);
 	if (!validation.valid) {
 		return res.status(400).json({ msg: validation.message });
+	}
+	const agenteExistente = agentesRepository.getAgentByID(req.body.agente_id);
+	if (agenteExistente.status === 404) {
+		return res.status(404).json({ msg: "Agente não encontrado para o agente_id fornecido" });
 	}
 	const novoCaso = caseModel(req.body);
 	const insertedCase = casosRepository.insertCase(novoCaso);

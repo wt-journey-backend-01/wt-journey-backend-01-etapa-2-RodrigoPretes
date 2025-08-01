@@ -13,11 +13,28 @@ const casosController = require('../controllers/casosController');
  * @swagger
  * /casos:
  *   get:
- *     summary: Lista todos os casos registrados
+ *     summary: Lista todos os casos registrados, com opção de filtros
  *     tags: [Casos]
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [aberto, solucionado]
+ *         required: false
+ *         description: Filtra os casos pelo status
+ *       - in: query
+ *         name: agente_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: false
+ *         description: Filtra os casos por agente responsável
  *     responses:
  *       200:
  *         description: Lista de casos retornada com sucesso
+ *       400:
+ *         description: Parâmetros inválidos
  */
 
 /**

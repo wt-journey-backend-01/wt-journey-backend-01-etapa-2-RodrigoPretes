@@ -81,11 +81,15 @@ function updateAgentById(agentID, req) {
         return createError(404, "ID de agente não encontrado");
     }
 
+    if (!isValidDate(req.dataDeIncorporacao)) {
+    return createError(400, "Data de incorporação inválida");
+    }
+
     agentes[index] = {
-        id: agentes[index].id,
-        nome: req.nome,
-        dataDeIncorporacao: isValidDate(req.dataDeIncorporacao),
-        cargo: req.cargo
+    id: agentes[index].id,
+    nome: req.nome,
+    dataDeIncorporacao: req.dataDeIncorporacao,
+    cargo: req.cargo
     };
 
     return {
@@ -99,7 +103,7 @@ function patchAgentByID(agentID, req) {
         return createError(404, "ID de agente não encontrado");
     }
 
-    if(req.id && req.id !== caseID) {
+    if(req.id && req.id !== agentID) {
         return createError(400, "ID pode ser sobrescrito");
     }
 

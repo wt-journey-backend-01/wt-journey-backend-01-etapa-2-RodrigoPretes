@@ -15,6 +15,20 @@ const agentesController = require('../controllers/agentesController');
  *   get:
  *     summary: Lista todos os agentes
  *     tags: [Agentes]
+ *     parameters:
+ *       - in: query
+ *         name: cargo
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: "Filtra os agentes pelo cargo (ex: 'delegado')"
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         required: false
+ *         description: Ordena os agentes pela data de incorporação
  *     responses:
  *       200:
  *         description: Lista de agentes retornada com sucesso

@@ -26,7 +26,7 @@ function validateUUID(id) {
 }
 
 function getAllAgentes(req, res) {
-    const { cargo, sort } = req.query;
+    const { cargo, sort, agente_id } = req.query;
 
     if (cargo) {
         const result = agentesRepository.findByCargo(cargo);
