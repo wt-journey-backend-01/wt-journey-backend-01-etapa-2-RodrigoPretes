@@ -1,6 +1,7 @@
 const agentesRepository = require("../repositories/agentesRepository");
 const { v4: uuidv4, validate: isUUID } = require('uuid');
 const { createError } = require('../utils/errorHandler');
+const casosRepository = require('../repositories/casosRepository');
 
 
 const caseModel = (req) => {
@@ -30,12 +31,12 @@ function getAllAgentes(req, res) {
 
     if (cargo) {
         const result = agentesRepository.findByCargo(cargo);
-        return res.status(result.status).json(result);
+        return res.status(result.status).json(result.data);
     }
 
-    if (sort === 'asc' || sort === 'desc') {
-        const result = agentesRepository.sortByName(sort);
-        return res.status(result.status).json(result);
+    if (sort) {
+        const result = agentesRepository.sortByIncorporation(sort);
+        return res.status(result.status).json(result.data);
     }
 
     if (agente_id) {
@@ -43,17 +44,17 @@ function getAllAgentes(req, res) {
             return res.status(400).json({ msg: "ID de agente não fornecido ou inválido" });
         }
         const result = casosRepository.findByAgent(agente_id);
-        return res.status(result.status).json(result);
+        return res.status(result.status).json(result.data);
     }
     const result = agentesRepository.findAllAgents();
-    res.status(result.status).json(result);
+    res.status(result.status).json(result.data);
 }
 
 function getAgenteByID(req, res) {
     const invalid = validateUUID(req.params.id);
     if (invalid) return res.status(invalid.status).json(invalid);
     const result = agentesRepository.getAgentByID(req.params.id);
-    res.status(result.status).json(result);
+    res.status(result.status).json(result.data);
 }
 
 function insertAgente(req, res) {
@@ -63,7 +64,7 @@ function insertAgente(req, res) {
     }
     const novoAgente = caseModel(req.body);
     const result = agentesRepository.insertAgent(novoAgente);
-    res.status(result.status).json(result);
+    res.status(result.status).json(result.data);
 }
 
 function updateAgenteById(req, res) {
@@ -92,7 +93,7 @@ function deleteAgenteById(req, res) {
     const invalid = validateUUID(req.params.id);
     if (invalid) return res.status(invalid.status).json(invalid);
     const result = agentesRepository.deleteAgentById(req.params.id);
-    res.status(result.status).json(result);
+    res.status(result.status).json(result.msg);
 }
 
 module.exports = {

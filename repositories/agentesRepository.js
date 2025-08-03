@@ -2,18 +2,18 @@ const { v4: uuidv4 } = require('uuid');
 const { createError } = require('../utils/errorHandler');
 const { isValidDate } = require('../utils/formatDate');
 
-const caseModel = (req) => {
+const caseModel = (data) => {
   return {
     id: uuidv4(),
-    nome: req.nome,
-    dataDeIncorporacao: isValidDate(req.dataDeIncorporacao) ? req.dataDeIncorporacao : null,
-    cargo: req.cargo
+    nome: data.nome,
+    dataDeIncorporacao: isValidDate(data.dataDeIncorporacao) ? data.dataDeIncorporacao : null,
+    cargo: data.cargo
   };
 };
 
 const agentes = [
     {
-        id: uuidv4(),
+        id: "401bccf5-cf9e-489d-8412-446cd169a0f1",
         nome: "Rommel Carneiro",
         dataDeIncorporacao: "1992-10-04",
         cargo: "delegado"
@@ -22,7 +22,7 @@ const agentes = [
 
 function findAllAgents() {
     return {
-        agentes,
+        data: agentes,
         msg: "Lista de agentes obtida com sucesso",
         status: 200
     };
@@ -43,15 +43,35 @@ function findByCargo(cargo) {
     };
 }
 
-function sortByName(order) {
-    const sorted = [...agentes].sort((a, b) => {
-        if (order === 'asc') return a.nome.localeCompare(b.nome);
-        else return b.nome.localeCompare(a.nome);
-    });
-    return {
-        status: 200,
-        data: sorted
-    };
+function sortByIncorporation(sortParam) {
+  const asc = sortParam === 'dataDeIncorporacao';
+  const desc = sortParam === '-dataDeIncorporacao';
+
+  if (!asc && !desc) {
+    return createError(400, "Parâmetro sort inválido. Use 'dataDeIncorporacao' ou '-dataDeIncorporacao'.");
+  }
+
+  const sorted = [...agentes].sort((a, b) => {
+    const da = new Date(a.dataDeIncorporacao);
+    const db = new Date(b.dataDeIncorporacao);
+
+    const aInvalid = isNaN(da);
+    const bInvalid = isNaN(db);
+
+    if (aInvalid && bInvalid) return 0;
+    if (aInvalid) return 1;
+    if (bInvalid) return -1;
+
+    return asc ? (da - db) : (db - da);
+  });
+
+  return {
+    status: 200,
+    data: sorted,
+    msg: asc
+      ? "Agentes ordenados por dataDeIncorporacao (ascendente: mais antigo primeiro)."
+      : "Agentes ordenados por dataDeIncorporacao (descendente: mais recente primeiro)."
+  };
 }
 
 function insertAgent(req) {
@@ -69,7 +89,7 @@ function insertAgent(req) {
 
     agentes.push(novoAgente);
     return {
-        novoAgente,
+        data: novoAgente,
         msg: "Agente inserido com sucesso",
         status: 201
     };
@@ -130,7 +150,7 @@ function deleteAgentById(agentID) {
 module.exports = {
     findAllAgents,
     findByCargo,
-    sortByName,
+    sortByIncorporation,
     getAgentByID,
     insertAgent,
     updateAgentById,
