@@ -28,7 +28,7 @@ function findAllAgents() {
     };
 }
 
-function getAgentByID(id) {
+function getAgentByID(id) { 
     const agent = agentes.find(a => a.id === id);
     return agent
         ? { data: agent, msg: "Agente encontrado com sucesso", status: 200 }
