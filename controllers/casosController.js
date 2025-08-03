@@ -99,7 +99,7 @@ function insertCase(req, res) {
 		return res.status(400).json({
 		status: 400,
 		message: "Parâmetros inválidos",
-		errors: v.errors
+		errors: validCaseData.errors
 		});
 	}
 	const agenteExistente = agentesRepository.getAgentByID(req.body.agente_id);
