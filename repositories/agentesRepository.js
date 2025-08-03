@@ -31,7 +31,7 @@ function findAllAgents() {
 function getAgentByID(id) {
     const agent = agentes.find(a => a.id === id);
     return agent
-        ? { agent, msg: "Agente encontrado com sucesso", status: 200 }
+        ? { data: agent, msg: "Agente encontrado com sucesso", status: 200 }
         : createError(404, "ID de agente não encontrado");
 }
 
@@ -124,7 +124,7 @@ function patchAgentByID(agentID, req) {
     }
 
     if(req.id && req.id !== agentID) {
-        return createError(400, "ID pode ser sobrescrito");
+        return createError(400, "ID não pode ser sobrescrito");
     }
 
     agentes[index] = { ...agentes[index], ...req };

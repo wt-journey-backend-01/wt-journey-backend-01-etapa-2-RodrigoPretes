@@ -26,7 +26,7 @@ const agentesController = require('../controllers/agentesController');
  *         name: sort
  *         schema:
  *           type: string
- *           enum: [asc, desc]
+ *           enum: [dataDeIncorporacao, -dataDeIncorporacao]
  *         required: false
  *         description: Ordena os agentes pela data de incorporação
  *     responses:

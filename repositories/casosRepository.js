@@ -1,26 +1,6 @@
 const { v4: uuidv4, validate } = require('uuid');
 const { createError } = require('../utils/errorHandler')
 
-const caseModel = (data) => {
-
-    if (data?.status !== "aberto" && data?.status !== "solucionado") {
-        return {
-            err: null,
-            msgError: "status inválido, deve ser 'aberto' ou 'solucionado'",
-            status: 400
-        };
-    }
-
-  return {
-    id: uuidv4(),
-    titulo: data.titulo,
-    descricao: data.descricao,
-    status: data.status,
-    agente_id: data.agente_id
-  };
-};
-
-
 const cases = [
     {
         id: "f5fb2ad5-22a8-4cb4-90f2-8733517a0d46",
@@ -64,15 +44,14 @@ function getCaseByID(id) {
 
     return caseFounded ? 
         {
-            case: caseFounded,
+            data: caseFounded,
             msg: "Caso encontrado com sucesso",
             status: 200
         } : 
         createError(404, "ID de caso não encontrado");
 }
 
-function insertCase(req){
-    const novoCaso = caseModel(req);
+function insertCase(novoCaso){
     cases.push(novoCaso);
     return {
         data: novoCaso,
@@ -111,7 +90,7 @@ function patchCaseByID(caseID, req){
     }
 
     if(req.id && req.id !== caseID) {
-        return createError(400, "ID pode ser sobrescrito");
+        return createError(400, "ID não pode ser sobrescrito");
     }
 
     cases[indexCase] = { ...cases[indexCase], ...req };
