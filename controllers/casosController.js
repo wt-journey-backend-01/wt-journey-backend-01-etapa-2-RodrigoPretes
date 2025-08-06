@@ -76,7 +76,8 @@ function getAllCasos(req, res) {
 
 	if (agente_id) {
 		if (!isUUID(agente_id)) {
-			return createError(400, "ID de agente não fornecido ou inválido");
+			const error = createError(400, "ID de agente não fornecido ou inválido");
+			return res.status(error.status).json({ msg: error.message });
 		}
 		const result = casosRepository.findByAgent(agente_id);
 		return res.status(result.status).json(result.data);
@@ -117,7 +118,8 @@ function updateCaseById(req, res){
 	if (invalid) return res.status(invalid.status).json(invalid);
 	const validation = validateCaseData(req.body, false);
 	if (!validation.valid) {
-		return createError(400, validation.message);
+		const error = createError(400, validation.message);
+		return res.status(error.status).json({ msg: error.message });
 	}
 	const caseID = req.params.id;
 	const updatedCase = casosRepository.updateCaseById(caseID, req.body);
@@ -129,9 +131,13 @@ function patchCaseByID(req, res) {
 	if (invalid) return res.status(invalid.status).json(invalid);
 	const validation = validateCaseData(req.body, true);
 	if (!validation.valid) {
-		return createError(400, validation.message);
+		const error = createError(400, validation.message);
+		return res.status(error.status).json({ msg: error.message });
 	}
-	if(req.body.id) return createError(400, "ID não pode ser sobrescrito");
+	if(req.body.id){
+		const error = createError(400, "ID não pode ser sobrescrito");
+		return res.status(error.status).json({ msg: error.message });
+	}
 	const caseID = req.params.id;
 	const patchedCase = casosRepository.patchCaseByID(caseID, req.body);
 	return res.status(patchedCase.status).json(patchedCase.data);

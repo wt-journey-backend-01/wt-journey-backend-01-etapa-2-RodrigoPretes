@@ -41,7 +41,8 @@ function getAllAgentes(req, res) {
 
     if (agente_id) {
         if (!isUUID(agente_id)) {
-            return createError(400, "ID de agente não fornecido ou inválido");
+            const error = createError(400, "ID de agente não fornecido ou inválido");
+            return res.status(error.status).json({ msg: error.message });
         }
         const result = casosRepository.findByAgent(agente_id);
         return res.status(result.status).json(result.data);
@@ -60,7 +61,8 @@ function getAgenteByID(req, res) {
 function insertAgente(req, res) {
     const validation = validateCaseData(req.body);
     if (!validation.valid) {
-        return createError(400, validation.message);
+        const error = createError(400, validation.message);
+        return res.status(error.status).json({ msg: error.message });
     }
     const novoAgente = caseModel(req.body);
     const result = agentesRepository.insertAgent(novoAgente);
@@ -72,7 +74,8 @@ function updateAgenteById(req, res) {
     if (invalid) return res.status(invalid.status).json(invalid);
     const validation = validateCaseData(req.body);
     if (!validation.valid) {
-        return createError(400, validation.message);
+        const error = createError(400, validation.message);
+        return res.status(error.status).json({ msg: error.message });
     }
     const result = agentesRepository.updateAgentById(req.params.id, req.body);
     res.status(result.status).json({msg: "Agente atualizado com sucesso!"});
@@ -81,7 +84,10 @@ function updateAgenteById(req, res) {
 function patchAgenteByID(req, res) {
     const invalid = validateUUID(req.params.id);
     if (invalid) return res.status(invalid.status).json(invalid);
-    if(req.body.id) return createError(400, "ID não pode ser sobrescrito");
+    if(req.body.id){
+        const error = createError(400, "ID não pode ser sobrescrito");
+        return res.status(error.status).json({ msg: error.message });
+    }
     const result = agentesRepository.patchAgentByID(req.params.id, req.body);
     res.status(result.status).json({msg: "Agente atualizado com sucesso!"});
 }
