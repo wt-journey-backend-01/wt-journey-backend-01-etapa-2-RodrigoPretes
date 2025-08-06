@@ -141,7 +141,7 @@ function deleteCaseById(req, res) {
 	if (invalid) return res.status(invalid.status).json(invalid);
 	const caseID = req.params.id;
 	const deletedCase = casosRepository.deleteCaseById(caseID);
-	return res.status(deletedCase.status).json(deletedCase.msg);
+	return res.status(deletedCase.status).json({msg: deletedCase.msg});
 }
 
 

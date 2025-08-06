@@ -90,7 +90,7 @@ function deleteAgenteById(req, res) {
     const invalid = validateUUID(req.params.id);
     if (invalid) return res.status(invalid.status).json(invalid);
     const result = agentesRepository.deleteAgentById(req.params.id);
-    res.status(result.status).json(result.msg);
+    res.status(result.status).json({msg: result.msg});
 }
 
 module.exports = {
