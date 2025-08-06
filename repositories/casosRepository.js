@@ -78,7 +78,8 @@ function updateCaseById(caseID, req){
     cases[indexCase] = updatedCase;
 
     return {
-            status: 204
+            data: cases[indexCase],
+            status: 200
         };
 }
 
@@ -96,7 +97,8 @@ function patchCaseByID(caseID, req){
     cases[indexCase] = { ...cases[indexCase], ...req };
 
     return {
-        status: 204
+        data: cases[indexCase],
+        status: 200
     };
 }
 

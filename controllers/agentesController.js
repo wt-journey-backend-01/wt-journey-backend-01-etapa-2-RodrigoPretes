@@ -75,7 +75,7 @@ function updateAgenteById(req, res) {
         return createError(400, validation.message);
     }
     const result = agentesRepository.updateAgentById(req.params.id, req.body);
-    res.status(result.status).send();
+    res.status(result.status).json({msg: "Agente atualizado com sucesso!"});
 }
 
 function patchAgenteByID(req, res) {
@@ -83,7 +83,7 @@ function patchAgenteByID(req, res) {
     if (invalid) return res.status(invalid.status).json(invalid);
     if(req.body.id) return createError(400, "ID não pode ser sobrescrito");
     const result = agentesRepository.patchAgentByID(req.params.id, req.body);
-    res.status(result.status).send();
+    res.status(result.status).json({msg: "Agente atualizado com sucesso!"});
 }
 
 function deleteAgenteById(req, res) {

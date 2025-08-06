@@ -113,7 +113,8 @@ function updateAgentById(agentID, req) {
     };
 
     return {
-        status: 204
+        data: agentes[index],
+        status: 200
     };
 }
 
@@ -130,7 +131,8 @@ function patchAgentByID(agentID, req) {
     agentes[index] = { ...agentes[index], ...req };
 
     return {
-        status: 204
+        data: agentes[index],
+        status: 200
     };
 }
 

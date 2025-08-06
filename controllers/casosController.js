@@ -120,7 +120,7 @@ function updateCaseById(req, res){
 	}
 	const caseID = req.params.id;
 	const updatedCase = casosRepository.updateCaseById(caseID, req.body);
-	return res.status(updatedCase.status).send();
+	return res.status(updatedCase.status).json(updatedCase.data);
 }
 
 function patchCaseByID(req, res) {
@@ -133,7 +133,7 @@ function patchCaseByID(req, res) {
 	if(req.body.id) return createError(400, "ID não pode ser sobrescrito");
 	const caseID = req.params.id;
 	const patchedCase = casosRepository.patchCaseByID(caseID, req.body);
-	return res.status(patchedCase.status).send();
+	return res.status(patchedCase.status).json(patchedCase.data);
 }
 
 function deleteCaseById(req, res) {
