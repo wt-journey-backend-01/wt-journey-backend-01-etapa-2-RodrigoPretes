@@ -67,7 +67,8 @@ function getAllCasos(req, res) {
 
 	if (status) {
 		if (status !== "aberto" && status !== "solucionado") {
-			return createError(400, "Status inválido, deve ser 'aberto' ou 'solucionado'");
+			const error = createError(400, "Status inválido, deve ser 'aberto' ou 'solucionado'");
+			return res.status(error.status).json({ msg: error.message });
 		}
 		const result = casosRepository.findByStatus(status);
 		return res.status(result.status).json(result.data);
