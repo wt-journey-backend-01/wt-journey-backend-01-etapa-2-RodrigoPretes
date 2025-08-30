@@ -7,6 +7,13 @@ function buildCase(data, method){
     const allowed = ['titulo', 'descricao', 'status', 'agente_id'];
     const payload = {};
 
+	if (method === 'patch') {
+        const keys = Object.keys(data);
+        if (keys.length === 0) {
+            return { valid: false, message: 'Body vazio: pelo menos um campo deve ser enviado para atualização.' };
+        }
+    }
+
     if (data === null || typeof data !== 'object' || Array.isArray(data)) {
         return { valid: false, message: 'Body inválido: esperado um objeto.' };
     }
@@ -68,14 +75,14 @@ function buildCase(data, method){
 }
 
 function validateUUID(id) {
-  if (!isUUID(id)) {
-    return createError(400, "ID inválido, deve ser UUID");
-  }
+	if (!isUUID(id)) {
+		return createError(400, "ID inválido, deve ser UUID");
+	}
+	return null;
 }
 
 function getAllCasos(req, res) {
-	const { status, agente_id } = req.query;
-
+	const { status, agente_id, } = req.query;
 	if (status) {
 		if (status !== "aberto" && status !== "solucionado") {
 			const error = createError(400, "Status inválido, deve ser 'aberto' ou 'solucionado'");
@@ -88,7 +95,7 @@ function getAllCasos(req, res) {
 	if (agente_id) {
 		const validID = validateUUID(agente_id)
 		if (validID) {
-			return res.status(validID.status).json(validID);
+			return res.status(validID.status).json({msg: validID.message});
 		}
 		const result = casosRepository.findByAgent(agente_id);
 		return res.status(result.status).json(result.data);
@@ -98,10 +105,23 @@ function getAllCasos(req, res) {
 	res.status(result.status).json(result.data);
 }
 
+function getSearchCases(req, res) {
+
+    const { q } = req.query;
+
+    if (!q) {
+        const error = createError(400, "O parâmetro 'q' é obrigatório");
+        return res.status(error.status).json({ msg: error.message });
+    }
+
+    const result = casosRepository.searchCases(q);
+    return res.status(result.status).json(result.data);
+}
+
 function getCaseByID(req, res) {
 	const valid = validateUUID(req.params.id);
 	if (valid){
-		return res.status(valid.status).json(valid);
+		return res.status(valid.status).json({msg: valid.message});
 	} 
 	const caseID = req.params.id;
 	const result = casosRepository.getCaseByID(caseID);
@@ -126,7 +146,7 @@ function insertCase(req, res) {
 function updateCaseById(req, res){
 	const validID = validateUUID(req.params.id)
 	if (validID) {
-		return res.status(validID.status).json(validID);
+		return res.status(validID.status).json({msg: validID.message});
 	}
 	const validCaseData = buildCase(req.body, 'put');
 	if (!validCaseData.valid) {
@@ -145,7 +165,7 @@ function updateCaseById(req, res){
 function patchCaseByID(req, res) {
 	const validID = validateUUID(req.params.id)
 	if (validID) {
-		return res.status(validID.status).json(validID);
+		return res.status(validID.status).json({msg: validID.message});
 	}
 	const validCaseData = buildCase(req.body, 'patch');
 	if (!validCaseData.valid) {
@@ -166,7 +186,7 @@ function patchCaseByID(req, res) {
 function deleteCaseById(req, res) {
 	const invalid = validateUUID(req.params.id);
 	if (invalid){
-		return res.status(invalid.status).json(invalid);
+		return res.status(invalid.status).json({msg: invalid.message});
 	}
 	const result = casosRepository.deleteCaseById(req.params.id);
 	res.status(result.status).send();
@@ -176,6 +196,7 @@ function deleteCaseById(req, res) {
 module.exports = {
 	getAllCasos,
 	getCaseByID,
+	getSearchCases,
 	insertCase,
 	updateCaseById,
 	patchCaseByID,

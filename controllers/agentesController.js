@@ -8,6 +8,13 @@ function buildAgent(data, method) {
     const allowed = ['nome', 'dataDeIncorporacao', 'cargo'];
     const payload = {};
 
+    if (method === 'patch') {
+        const keys = Object.keys(data);
+        if (keys.length === 0) {
+            return { valid: false, message: 'Body vazio: pelo menos um campo deve ser enviado para atualização.' };
+        }
+    }
+
     if (data === null || typeof data !== 'object' || Array.isArray(data)) {
         return { valid: false, message: 'Body inválido: esperado um objeto.' };
     }
@@ -58,9 +65,10 @@ function buildAgent(data, method) {
 }
 
 function validateUUID(id) {
-  if (!isUUID(id)) {
-    return createError(400, "ID inválido, deve ser UUID");
-  }
+	if (!isUUID(id)) {
+		return createError(400, "ID inválido, deve ser UUID");
+	}
+	return null;
 }
 
 function getAllAgentes(req, res) {
@@ -87,7 +95,7 @@ function getAllAgentes(req, res) {
 function getAgenteByID(req, res) {
     const invalid = validateUUID(req.params.id);
     if (invalid){
-        return res.status(invalid.status).json(invalid);
+        return res.status(invalid.status).json({msg: invalid.message});
     } 
     const result = agentesRepository.getAgentByID(req.params.id);
     res.status(result.status).json(result.data);
@@ -106,7 +114,7 @@ function insertAgente(req, res) {
 function updateAgenteById(req, res) {
     const invalid = validateUUID(req.params.id);
     if (invalid){
-        return res.status(invalid.status).json(invalid);
+        return res.status(invalid.status).json({msg: invalid.message});
     } 
     const buildedAgent = buildAgent(req.body, 'put');
     if (!buildedAgent.valid) {
@@ -120,7 +128,7 @@ function updateAgenteById(req, res) {
 function patchAgenteByID(req, res) {
     const invalid = validateUUID(req.params.id);
     if (invalid){
-        return res.status(invalid.status).json(invalid);
+        return res.status(invalid.status).json({msg: invalid.message});
     } 
     const validAgentPatch = buildAgent(req.body, 'patch');
     if (!validAgentPatch.valid) {
@@ -134,7 +142,7 @@ function patchAgenteByID(req, res) {
 function deleteAgenteById(req, res) {
     const invalid = validateUUID(req.params.id);
     if (invalid){
-        return res.status(invalid.status).json(invalid);
+        return res.status(invalid.status).json({msg: invalid.message});
     }
     const result = agentesRepository.deleteAgentById(req.params.id);
     res.status(result.status).send();

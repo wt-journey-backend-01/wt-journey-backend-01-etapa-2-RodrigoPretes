@@ -182,13 +182,42 @@ const casosController = require('../controllers/casosController');
  *         schema:
  *           type: string
  *     responses:
- *       200:
+ *       204:
  *         description: Caso deletado com sucesso
  *       404:
  *         description: Caso não encontrado
  */
 
+/**
+ * @swagger
+ * /casos/search:
+ *   get:
+ *     summary: Busca casos pelo título ou descrição
+ *     description: Retorna todos os casos em que a palavra informada na query string aparece no título e/ou descrição. A busca é case-insensitive e ignora acentos.
+ *     tags: [Casos]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Palavra a ser buscada no título ou descrição dos casos
+ *     responses:
+ *       200:
+ *         description: Lista de casos encontrados
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Caso'
+ *       400:
+ *         description: Query inválida (quando 'q' não é informado ou é vazio)
+ */
+
+
 router.get('/casos', casosController.getAllCasos);
+router.get('/casos/search', casosController.getSearchCases);
 router.get('/casos/:id', casosController.getCaseByID);
 router.post('/casos', casosController.insertCase);
 router.put('/casos/:id', casosController.updateCaseById);

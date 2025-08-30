@@ -171,7 +171,7 @@ const agentesController = require('../controllers/agentesController');
  *           type: string
  *           format: uuid
  *     responses:
- *       200:
+ *       204:
  *         description: Agente deletado com sucesso
  *       404:
  *         description: Agente não encontrado

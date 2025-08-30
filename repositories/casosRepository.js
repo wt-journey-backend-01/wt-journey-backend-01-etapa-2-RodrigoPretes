@@ -1,5 +1,15 @@
 const { v4: uuidv4, validate } = require('uuid');
-const { createError } = require('../utils/errorHandler')
+const { createError } = require('../utils/errorHandler');
+
+const caseModel= (data) =>{
+    return {
+        id: uuidv4(),
+        titulo: data.titulo,
+        descricao: data.descricao,
+        status: data.status,
+        agente_id: data.agente_id
+    };
+}
 
 const cases = [
     {
@@ -51,10 +61,36 @@ function getCaseByID(id) {
         createError(404, "ID de caso não encontrado");
 }
 
-function insertCase(novoCaso){
-    cases.push(novoCaso);
+function searchCases(query) {
+    if (!query) {
+        return createError(400, "Query não pode ser vazia");
+    }
+
+    const q = query.toLowerCase();
+    const result = cases.filter(caso =>
+        caso.titulo.toLowerCase().includes(q) ||
+        caso.descricao.toLowerCase().includes(q)
+    );
+
     return {
-        data: novoCaso,
+        data: result,
+        msg: "Casos encontrados com sucesso",
+        status: 200
+    };
+}
+
+function insertCase(novoCaso){
+
+    const newCase = caseModel(novoCaso);
+
+    if (!newCase.titulo || !newCase.descricao || !newCase.status || !newCase.agente_id) {
+        return createError(400, "Campos obrigatórios faltando");
+    }
+
+    cases.push(newCase);
+
+    return {
+        data: newCase,
         msg: "Caso inserido com sucesso",
         status: 201
     };
@@ -117,5 +153,13 @@ function deleteCaseById(caseID){
 }
 
 module.exports = {
-    findAllCases, findByStatus, findByAgent, getCaseByID, insertCase, updateCaseById, patchCaseByID, deleteCaseById
+    findAllCases,
+    findByStatus,
+    findByAgent,
+    getCaseByID,
+    searchCases,
+    insertCase,
+    updateCaseById,
+    patchCaseByID,
+    deleteCaseById
 }
