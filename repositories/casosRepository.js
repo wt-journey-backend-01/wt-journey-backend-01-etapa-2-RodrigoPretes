@@ -111,8 +111,8 @@ function deleteCaseById(caseID){
 
     cases.splice(indexCase, 1);
     return {
-        msg: "Caso deletado com sucesso",
-        status: 200
+        data: null,
+        status: 204
     };
 }
 

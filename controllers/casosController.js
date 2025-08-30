@@ -56,11 +56,11 @@ function buildCase(data, method){
 	if (payload.agente_id !== undefined) {
 		const validID = validateUUID(payload.agente_id)
 		if (validID) {
-			return { valid: false, message: validID.msg }
+			return { valid: false, message: validID.message }
 		}
 		const hasAgentWithID = agentesRepository.getAgentByID(payload.agente_id);
         if(hasAgentWithID.status !== 200){
-            return { valid: false, message: hasAgentWithID.msg };
+            return { valid: false, message: hasAgentWithID.message };
         }
     }
 
@@ -133,6 +133,11 @@ function updateCaseById(req, res){
 		const error = createError(400, validCaseData.message);
 		return res.status(error.status).json({msg: error.message});
 	}
+	const existingAgent = agentesRepository.getAgentByID(req.body.agente_id);
+	if (existingAgent.status !== 200) {
+		const error = createError(existingAgent.status, existingAgent.message);
+		return res.status(error.status).json({msg: error.message});
+	}
 	const result = casosRepository.updateCaseById(req.params.id, validCaseData.payload);
 	return res.status(result.status).json(result.data);
 }
@@ -146,6 +151,13 @@ function patchCaseByID(req, res) {
 	if (!validCaseData.valid) {
 		const error = createError(400, validCaseData.message);
 		return res.status(error.status).json({msg: error.message});
+	}
+	if(req.body.agente_id){
+		const existingAgent = agentesRepository.getAgentByID(req.body.agente_id);
+		if (existingAgent.status !== 200) {
+			const error = createError(existingAgent.status, existingAgent.message);
+			return res.status(error.status).json({msg: error.message});
+		}
 	}
 	const result = casosRepository.patchCaseByID(req.params.id, validCaseData.payload);
 	return res.status(result.status).json(result.data);

@@ -102,7 +102,7 @@ function updateAgentById(agentID, req) {
     }
 
     if (!isValidDate(req.dataDeIncorporacao)) {
-    return createError(400, "Data de incorporação inválida");
+        return createError(400, "Data de incorporação inválida");
     }
 
     agentes[index] = {
@@ -128,6 +128,10 @@ function patchAgentByID(agentID, req) {
         return createError(400, "ID não pode ser sobrescrito");
     }
 
+    if (req.dataDeIncorporacao && !isValidDate(req.dataDeIncorporacao)) {
+        return createError(400, "Data de incorporação inválida");
+    }
+
     agentes[index] = { ...agentes[index], ...req };
 
     return {
@@ -144,8 +148,8 @@ function deleteAgentById(agentID) {
 
     agentes.splice(index, 1);
     return {
-        msg: "Agente deletado com sucesso",
-        status: 200
+        data: null,
+        status: 204
     };
 }
 
