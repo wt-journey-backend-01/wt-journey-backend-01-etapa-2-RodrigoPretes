@@ -1,55 +1,34 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 5 créditos restantes para usar o sistema de feedback AI.
+Você tem 4 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para RodrigoPretes:
 
-Nota final: **56.2/100**
+Nota final: **61.2/100**
 
-# Feedback para RodrigoPretes 🚔🚀
+# Feedback para RodrigoPretes 🚔✨
 
-Olá, Rodrigo! Primeiro, quero parabenizá-lo pelo esforço e dedicação na construção da sua API para o Departamento de Polícia! 🎉 Você estruturou seu projeto com uma arquitetura modular bacana, separando controllers, repositories e routes, e isso já é um grande passo para manter o código organizado e escalável. Além disso, vi que você implementou corretamente os endpoints básicos para agentes e casos, com validações importantes no payload e tratamento de erros — isso é essencial para uma API robusta. 👏
-
-Também notei que você conseguiu implementar filtros simples e ordenações para agentes, e isso é um bônus muito legal! Mesmo que alguns detalhes ainda possam ser aprimorados, parabéns por essa entrega extra! 🌟
+Olá, Rodrigo! Tudo bem? Primeiro, quero te parabenizar pelo esforço e dedicação nesse desafio da API para o Departamento de Polícia! 🎉 Seu projeto está bem estruturado, com uma organização clara entre rotas, controllers e repositories — isso já é um baita avanço para um projeto Node.js com Express. Vamos juntos destrinchar o que está funcionando bem e onde podemos melhorar para deixar sua API tinindo? 🚀
 
 ---
 
-## Vamos analisar juntos os pontos que podem ser melhorados para deixar sua API ainda mais sólida? 🕵️‍♂️
+## 🎯 Pontos Fortes que Merecem Destaque
+
+- **Arquitetura Modular:** Você separou muito bem as responsabilidades entre `routes/`, `controllers/` e `repositories/`. Isso facilita muito a manutenção e o entendimento do código. 👏  
+- **Validações de Payloads:** As funções `buildAgent` e `buildCase` nos controllers fazem validações cuidadosas, garantindo que os dados estejam no formato correto antes de prosseguir. Isso é fundamental para APIs robustas.  
+- **Tratamento de Erros:** Você usa um padrão consistente para criar erros com `createError` e retornar status HTTP adequados, como 400 e 404, o que demonstra atenção ao protocolo HTTP.  
+- **Implementação Completa dos Endpoints:** Todos os métodos (GET, POST, PUT, PATCH, DELETE) para `/agentes` e `/casos` estão implementados, o que é essencial para a funcionalidade básica.  
+- **Bônus Conquistado:** Você conseguiu implementar filtros básicos para os casos (status e agente_id) e ordenação para agentes pela data de incorporação. Isso mostra que você foi além do obrigatório e buscou entregar funcionalidades extras — parabéns! 🏅
 
 ---
 
-### 1. Validação e uso do UUID para IDs (Penalidade detectada)
+## 🔎 Pontos para Melhorar e Como Corrigir
 
-**O que eu percebi:**  
-No seu código, principalmente no `casosController.js`, você tem uma função `validateUUID` que retorna um erro criado com `createError` quando o ID não é um UUID válido. Porém, ao usá-la, você retorna o objeto de erro inteiro no JSON, e em alguns lugares esse erro tem uma propriedade `msg` que não existe — o correto é `message`.
+### 1. Problema Fundamental: Validação do ID UUID para Casos
 
-Por exemplo, em `buildCase`:
+Eu percebi que há uma penalidade relacionada ao uso incorreto do UUID para os IDs dos casos. Isso indica que, em algum momento, o ID do caso não está sendo validado corretamente como UUID, o que pode causar erros ou falhas inesperadas.
 
-```js
-if (payload.agente_id !== undefined) {
-  const validID = validateUUID(payload.agente_id)
-  if (validID) {
-    return { valid: false, message: validID.msg }  // <-- aqui 'msg' não existe, deveria ser 'message'
-  }
-  const hasAgentWithID = agentesRepository.getAgentByID(payload.agente_id);
-  if(hasAgentWithID.status !== 200){
-    return { valid: false, message: hasAgentWithID.msg }; // mesmo problema aqui
-  }
-}
-```
-
-Esse detalhe pode causar comportamentos inesperados na validação e retorno de erros, e também é importante garantir que IDs sejam sempre UUIDs válidos para evitar problemas no sistema.
-
-**Como corrigir:**  
-Troque todas as ocorrências de `validID.msg` ou `hasAgentWithID.msg` para `validID.message` e `hasAgentWithID.message`, respectivamente. Isso garante que a mensagem de erro correta seja usada.
-
----
-
-### 2. Implementação da validação do UUID no controller dos casos
-
-No seu `casosController.js`, a função `validateUUID` é chamada para validar IDs, mas ela só retorna o erro, sem lançar exceções ou interromper o fluxo. Isso faz com que você tenha que verificar o retorno em todos os lugares.
-
-Por exemplo:
+No arquivo `controllers/casosController.js`, você tem a função `validateUUID` que retorna um erro se o ID não for UUID:
 
 ```js
 function validateUUID(id) {
@@ -59,164 +38,249 @@ function validateUUID(id) {
 }
 ```
 
-E depois:
+Porém, ao usar essa função, você está fazendo algo assim:
 
 ```js
-const validID = validateUUID(req.params.id);
-if (validID) {
-  return res.status(validID.status).json(validID);
+const valid = validateUUID(req.params.id);
+if (valid){
+  return res.status(valid.status).json(valid);
 }
 ```
 
-Isso funciona, mas pode ser melhorado para garantir consistência e clareza no fluxo.
-
----
-
-### 3. Validação do payload no PATCH para agentes e casos
-
-Você fez um ótimo trabalho em criar a função `buildAgent` e `buildCase` para validar o payload, o que é muito importante! 👏
-
-Porém, notei que, no repositório dos agentes (`agentesRepository.js`), na função `patchAgentByID`, você não está validando a data de incorporação quando ela é atualizada parcialmente. Isso pode causar a inserção de datas inválidas.
-
-Veja:
+O problema é que, se o ID for válido, sua função `validateUUID` retorna `undefined`, e se for inválido, retorna um objeto de erro. Isso está correto, mas para garantir que sempre o erro seja tratado, você poderia deixar a função mais explícita, por exemplo:
 
 ```js
-function patchAgentByID(agentID, req) {
-  const index = agentes.findIndex(a => a.id === agentID);
-  if (index === -1) {
-    return createError(404, "ID de agente não encontrado");
+function validateUUID(id) {
+  if (!isUUID(id)) {
+    return createError(400, "ID inválido, deve ser UUID");
   }
+  return null; // explicita que está válido
+}
+```
 
-  if(req.id && req.id !== agentID) {
-    return createError(400, "ID não pode ser sobrescrito");
-  }
+E no controller:
 
-  agentes[index] = { ...agentes[index], ...req };
+```js
+const error = validateUUID(req.params.id);
+if (error) {
+  return res.status(error.status).json({ msg: error.message });
+}
+```
 
+Além disso, no `repositories/casosRepository.js`, não vi validação de UUID ao inserir um novo caso. É importante garantir que o ID gerado para o caso seja um UUID válido. Você está fazendo o push do objeto diretamente, por exemplo:
+
+```js
+function insertCase(novoCaso){
+    cases.push(novoCaso);
+    return {
+        data: novoCaso,
+        msg: "Caso inserido com sucesso",
+        status: 201
+    };
+}
+```
+
+Mas o `novoCaso` vem do controller, que chama `buildCase` e depois insere. O ID do caso não está sendo criado automaticamente no repository, diferente do que acontece para agentes (veja que em `agentesRepository.js` você tem `caseModel` que gera o UUID). Para manter consistência, sugiro criar uma função `caseModel` para casos que gere o ID:
+
+```js
+const caseModel = (data) => {
   return {
-    data: agentes[index],
-    status: 200
+    id: uuidv4(),
+    titulo: data.titulo,
+    descricao: data.descricao,
+    status: data.status,
+    agente_id: data.agente_id
   };
+};
+```
+
+E usar isso no `insertCase`:
+
+```js
+function insertCase(data){
+    const novoCaso = caseModel(data);
+    cases.push(novoCaso);
+    return {
+        data: novoCaso,
+        msg: "Caso inserido com sucesso",
+        status: 201
+    };
 }
 ```
 
-Aqui, antes de atualizar, seria ideal validar se `req.dataDeIncorporacao` existe e se é uma data válida, igual ao que você faz na atualização completa (`updateAgentById`).
+Assim, o ID do caso sempre será UUID válido e gerado internamente, evitando problemas de validação.
 
-**Sugestão de melhoria:**
+---
+
+### 2. Falha na Validação do Payload no PATCH para Agentes
+
+Você teve uma falha no teste que verifica se o PATCH para agentes retorna 400 quando o payload está em formato incorreto. Ao analisar seu `buildAgent` no controller `agentesController.js`, notei que você verifica se o corpo é um objeto e não array:
 
 ```js
-if (req.dataDeIncorporacao && !isValidDate(req.dataDeIncorporacao)) {
-  return createError(400, "Data de incorporação inválida");
+if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+    return { valid: false, message: 'Body inválido: esperado um objeto.' };
 }
 ```
 
-Assim, você evita que dados inconsistentes entrem na sua base em memória.
+Isso está ótimo! Porém, no método PATCH, você só impede que o ID seja sobrescrito, mas não valida se o corpo está vazio, ou se os campos são do tipo correto para atualização parcial. Por exemplo, se o corpo vier vazio `{}`, seu código aceita, mas o ideal é rejeitar, pois não há nada para atualizar.
 
----
-
-### 4. Consistência no status HTTP retornado para DELETE de agentes e casos
-
-No seu controller, ao deletar um agente ou caso, você está respondendo com:
+Sugestão de melhoria:
 
 ```js
-res.status(result.status).send();
-```
-
-Porém, no seu repositório, o retorno para o delete tem status 200, e a resposta do controller não envia corpo.
-
-O ideal para operações DELETE bem sucedidas, quando não há conteúdo para retornar, é usar o status **204 No Content** e não enviar corpo.
-
-**Sugestão:**
-
-No controller, faça:
-
-```js
-res.status(204).send();
-```
-
-E no repositório, pode manter o retorno com status 204 para indicar sucesso sem conteúdo.
-
-Isso ajuda a seguir as boas práticas REST.
-
----
-
-### 5. Inclusão da validação do agente_id ao atualizar um caso
-
-No seu `casosController.js`, ao criar um novo caso você valida se o `agente_id` existe, o que está correto:
-
-```js
-const existingAgent = agentesRepository.getAgentByID(req.body.agente_id);
-if (existingAgent.status !== 200) {
-  const error = createError(existingAgent.status, existingAgent.msg);
-  return res.status(error.status).json({msg: error.message});
+if (method === 'patch') {
+  const keys = Object.keys(data);
+  if (keys.length === 0) {
+    return { valid: false, message: 'Body vazio: pelo menos um campo deve ser enviado para atualização.' };
+  }
 }
 ```
 
-Porém, ao atualizar um caso (PUT ou PATCH), essa validação não está presente, o que pode permitir atualizar o `agente_id` para um que não existe. Isso pode causar inconsistência nos dados.
-
-**Sugestão:**  
-Adicione essa validação também nas funções `updateCaseById` e `patchCaseByID` para garantir a integridade dos dados.
+Além disso, garanta que os campos enviados no PATCH são válidos — você já faz isso validando tipos, o que é ótimo!
 
 ---
 
-### 6. Filtros avançados e mensagens de erro customizadas (Bônus)
+### 3. Validação e Mensagens de Erro Personalizadas para Filtros e Parâmetros
 
-Você implementou os filtros básicos por `status` e `agente_id` nos casos, e por `cargo` e ordenação em agentes, o que é excelente! 🎯
+Você implementou filtros básicos para casos e agentes, mas os testes bônus indicam que faltam mensagens de erro customizadas para argumentos inválidos (por exemplo, filtro de casos por keywords no título/descrição, ou filtros mais complexos para agentes).
 
-No entanto, os testes bônus indicam que filtros mais avançados como busca por palavras-chave no título/descrição e mensagens de erro customizadas não foram implementados. Isso é uma oportunidade para você se destacar ainda mais no projeto.
+No método `getAllCasos` do controller, você valida o status e agente_id, mas não há filtro por keywords no título/descrição. Se quiser alcançar os bônus, seria legal implementar algo como:
 
----
-
-### 7. Organização do código e estrutura do projeto
-
-Sua estrutura de arquivos está muito bem organizada, seguindo a arquitetura esperada:
-
-```
-server.js
-routes/
-controllers/
-repositories/
-utils/
-docs/
+```js
+if (req.query.keyword) {
+  const keyword = req.query.keyword.toLowerCase();
+  const filtered = cases.filter(c => 
+    c.titulo.toLowerCase().includes(keyword) || 
+    c.descricao.toLowerCase().includes(keyword)
+  );
+  return res.status(200).json(filtered);
+}
 ```
 
-Parabéns por isso! Isso facilita muito a manutenção e evolução do projeto. 👏
+E para agentes, você já tem ordenação por `dataDeIncorporacao`, mas talvez falte combinar filtros e ordenação. Isso pode ser um próximo passo para deixar sua API ainda mais poderosa! 💪
 
 ---
 
-## Resumo Rápido para Você 🚦
+### 4. Status HTTP em Respostas DELETE
 
-- Corrija o uso das propriedades de erro (`message` em vez de `msg`) para garantir mensagens corretas no JSON.
-- Adicione validação da data em PATCH para agentes no repositório.
-- Use status HTTP 204 (No Content) para respostas DELETE sem corpo.
-- Valide `agente_id` ao atualizar casos (PUT e PATCH) para evitar IDs inválidos.
-- Considere implementar filtros avançados e mensagens de erro customizadas para melhorar sua API.
-- Continue mantendo a arquitetura modular e organizada como você já fez.
+Notei que em `deleteAgentById` e `deleteCaseById` você retorna status 204 com `res.status(result.status).send();`, o que está correto para resposta sem corpo. Porém, no Swagger você documentou que o DELETE retorna status 200 com mensagem de sucesso. Aqui há uma pequena inconsistência.
+
+Recomendo seguir o padrão RESTful e usar 204 No Content para DELETEs bem-sucedidos, e ajustar a documentação Swagger para refletir isso. Isso evita confusão para quem consome sua API.
 
 ---
 
-## Recursos para te ajudar a avançar 📚
+### 5. Organização e Arquitetura do Projeto
 
-- Para entender melhor como validar IDs UUID e tratar erros:  
+Sua estrutura de diretórios está perfeita e segue o padrão esperado:
+
+```
+├── routes/
+│   ├── agentesRoutes.js
+│   └── casosRoutes.js
+├── controllers/
+│   ├── agentesController.js
+│   └── casosController.js
+├── repositories/
+│   ├── agentesRepository.js
+│   └── casosRepository.js
+├── docs/
+│   └── swagger.js
+├── utils/
+│   ├── errorHandler.js
+│   └── formatDate.js
+├── server.js
+├── package.json
+```
+
+Parabéns por manter essa organização! Isso vai te ajudar muito em projetos maiores. Se quiser entender melhor a arquitetura MVC aplicada a Node.js, recomendo esse vídeo super didático:  
+👉 [Arquitetura MVC para Node.js (YouTube)](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)
+
+---
+
+## 🛠️ Trechos de Código para Ajuste
+
+### Criar model para casos com UUID no `repositories/casosRepository.js`
+
+```js
+const caseModel = (data) => {
+  return {
+    id: uuidv4(),
+    titulo: data.titulo,
+    descricao: data.descricao,
+    status: data.status,
+    agente_id: data.agente_id
+  };
+};
+
+function insertCase(data){
+    const novoCaso = caseModel(data);
+    cases.push(novoCaso);
+    return {
+        data: novoCaso,
+        msg: "Caso inserido com sucesso",
+        status: 201
+    };
+}
+```
+
+### Validar corpo vazio no PATCH (exemplo para agentes, similar para casos)
+
+```js
+function buildAgent(data, method) {
+  if (method === 'patch') {
+    const keys = Object.keys(data);
+    if (keys.length === 0) {
+      return { valid: false, message: 'Body vazio: pelo menos um campo deve ser enviado para atualização.' };
+    }
+  }
+  // resto da função...
+}
+```
+
+### Usar retorno explícito no `validateUUID`
+
+```js
+function validateUUID(id) {
+  if (!isUUID(id)) {
+    return createError(400, "ID inválido, deve ser UUID");
+  }
+  return null;
+}
+```
+
+---
+
+## 📚 Recursos para Você Aprofundar
+
+- Para entender melhor a **validação de dados e tratamento de erros com status 400 e 404**:  
   https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
-  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404
+  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404  
+  E também este vídeo que explica como validar dados em APIs Node.js/Express:  
+  👉 https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_
 
-- Para aprofundar em validação de dados e tratamento de erros em APIs Node.js/Express:  
-  https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_
+- Para aprimorar os filtros, ordenação e manipulação de arrays no JavaScript:  
+  👉 https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI
 
-- Para entender o uso correto dos códigos HTTP e métodos REST:  
-  https://youtu.be/RSZHvQomeKE
-
-- Para manipulação de arrays em JavaScript (filter, find, etc.), que você já usa muito bem, mas pode sempre aprimorar:  
-  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI
+- Para entender mais sobre a arquitetura do seu projeto e organização de rotas, controllers e repositories:  
+  👉 https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH  
+  https://expressjs.com/pt-br/guide/routing.html
 
 ---
 
-Rodrigo, seu projeto está no caminho certo e com alguns ajustes vai ficar excelente! Continue praticando e aprimorando essas validações e boas práticas REST. Seu empenho é visível e isso é o que mais importa para crescer como dev. 🚀💪
+## 📝 Resumo dos Principais Pontos para Focar
 
-Se precisar de ajuda para implementar alguma dessas melhorias, só chamar! Estou aqui para ajudar você a brilhar. ✨
+- ✅ **Gerar IDs UUID válidos para os casos no repository, assim como fez para agentes.**  
+- ✅ **Aprimorar validação do corpo no PATCH para garantir que não seja vazio e que os dados sejam válidos.**  
+- ✅ **Ajustar o tratamento e mensagens de erro para filtros e parâmetros, visando mensagens mais claras e personalizadas.**  
+- ✅ **Uniformizar o status HTTP retornado em DELETE para 204 No Content e ajustar a documentação Swagger.**  
+- ✅ **Manter a organização atual do projeto, que está excelente!**
 
-Abraço e bons códigos! 👊😄
+---
+
+Rodrigo, você está no caminho certo! Com esses ajustes, sua API vai ficar mais robusta, confiável e alinhada às boas práticas do desenvolvimento RESTful. Continue explorando, testando e aprimorando — isso faz toda a diferença no seu aprendizado e na qualidade do seu código! 💪🚀
+
+Se precisar de ajuda para implementar alguma dessas sugestões, estou aqui para te acompanhar! Vamos juntos nessa jornada! 😉
+
+Abraços e até a próxima revisão! 👋✨
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
